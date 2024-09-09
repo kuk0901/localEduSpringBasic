@@ -34,8 +34,18 @@ public class FreeBoardDaoImp implements FreeBoardDao{
   }
 
   @Override
+  public FreeBoardVo freeBoardSelectOne(int freeBoardId) {
+    return sqlSession.selectOne(namespace + "freeBoardSelectOne", freeBoardId);
+  }
+  
+  @Override
   public void freeBoardInsertOne(FreeBoardVo freeBoardVo) {
     sqlSession.insert(namespace + "freeBoardInsertOne", freeBoardVo);
+  }
+
+  @Override
+  public void freeBoardUpdateOne(FreeBoardVo freeBoardVo) {
+    sqlSession.update(namespace + "freeBoardUpdateOne", freeBoardVo);
   }
 
 }

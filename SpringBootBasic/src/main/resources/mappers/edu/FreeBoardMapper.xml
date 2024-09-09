@@ -40,10 +40,33 @@
 		FROM FREE_BOARD
 	</select>
 
+  <select id="freeBoardSelectOne" parameterType="int"
+      resultMap="freeBoardResultMap">
+      SELECT FB.FREE_BOARD_ID, FB.MEMBER_NO, M.EMAIL
+          ,M.MEMBER_NAME, FB.FREE_BOARD_TITLE, FB.FREE_BOARD_CONTENT
+          ,FB.CREATE_DATE         
+      FROM FREE_BOARD FB INNER JOIN MEMBER M
+      ON FB.MEMBER_NO = M.MEMBER_NO
+      WHERE FB.FREE_BOARD_ID = #{freeBoardId}
+   </select>
+
   <insert id="freeBoardInsertOne" parameterType="com.edu.freeBoard.domain.FreeBoardVo">
     INSERT INTO FREE_BOARD
     VALUE(FREE_BOARD_ID, MEMBER_NO, FREE_BOARD_TITLE, FREE_BOARD_CONTENT, CREATE_DATE, UPDATE_DATE)
 		VALUES(FREE_BOARD_ID_SEQ.NEXTVAL, #{memberNo}, #{freeBoardTitle}, #{freeBoardContent}, SYSDATE, SYSDATE)
   </insert>
+
+  <update id="freeBoardUpdateOne" parameterType="freeBoardVo">
+    UPDATE FREE_BOARD
+		SET 
+		  FREE_BOARD_TITLE = #{freeBoardTitle}
+		  , FREE_BOARD_CONTENT = #{freeBoardContent}
+		  , UPDATE_DATE = SYSDATE
+		WHERE FREE_BOARD_ID = #{freeBoardId}
+		AND MEMBER_NO = #{memberNo}
+  </update>
+
+ 
+  
 
 </mapper>

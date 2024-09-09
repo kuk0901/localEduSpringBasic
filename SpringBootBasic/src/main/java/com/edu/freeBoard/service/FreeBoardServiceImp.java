@@ -25,8 +25,18 @@ public class FreeBoardServiceImp implements FreeBoardService {
   }
 
   @Override
+  public FreeBoardVo freeBoardSelectOne(int freeBoardId) {
+    return freeBoardDao.freeBoardSelectOne(freeBoardId);
+  }
+  
+  @Override
   public void freeBoardInsertOne(FreeBoardVo freeBoardVo) {
     freeBoardDao.freeBoardInsertOne(freeBoardVo);
   }
+
+  @Override
+  public void freeBoardUpdateOne(FreeBoardVo freeBoardVo) {
+    freeBoardDao.freeBoardUpdateOne(freeBoardVo);
+  } 
 
 }
