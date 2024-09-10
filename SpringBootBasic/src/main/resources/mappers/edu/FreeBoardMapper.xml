@@ -49,11 +49,36 @@
       ON FB.MEMBER_NO = M.MEMBER_NO
       WHERE FB.FREE_BOARD_ID = #{freeBoardId}
    </select>
+   
+   <select id="freeBoardFileSelectList" parameterType="int"
+      resultType="map">
+      SELECT FBF.FREE_BOARD_FILE_ID as "freeBoardFileId" <!-- 대소문자 구문을 위해 "" 사용 -->
+			    , FBF.FREE_BOARD_ID "freeBoardId", FBF.ORIGINAL_FILE_NAME as "originalFileName"
+			    , FBF.STORED_FILE_NAME as "storedFileName"
+			    , ROUND(FBF.FREE_BOARD_FILE_SIZE/1024, 1) as "freeBoardFileSize" 
+			FROM FREE_BOARD_FILE FBF
+			WHERE FBF.FREE_BOARD_ID = #{freeBoardId}
+   </select>
 
-  <insert id="freeBoardInsertOne" parameterType="com.edu.freeBoard.domain.FreeBoardVo">
+  <!-- keyProperty의 return type을 parameterType의 VO 객체에 바로 set -->
+  <insert id="freeBoardInsertOne" parameterType="com.edu.freeBoard.domain.FreeBoardVo" useGeneratedKeys="true" keyProperty="freeBoardId">
+    <!-- useGeneratedKeys 이후 실행, insert 구문에서 keyProperty는 return 타입을 의미  -->
+    <selectKey keyProperty="freeBoardId" resultType="int" order="BEFORE">
+      SELECT FREE_BOARD_ID_SEQ.NEXTVAL
+      FROM DUAL
+    </selectKey>
+    
     INSERT INTO FREE_BOARD
     VALUE(FREE_BOARD_ID, MEMBER_NO, FREE_BOARD_TITLE, FREE_BOARD_CONTENT, CREATE_DATE, UPDATE_DATE)
-		VALUES(FREE_BOARD_ID_SEQ.NEXTVAL, #{memberNo}, #{freeBoardTitle}, #{freeBoardContent}, SYSDATE, SYSDATE)
+		VALUES(#{freeBoardId}, #{memberNo}, #{freeBoardTitle}, #{freeBoardContent}, SYSDATE, SYSDATE)
+  </insert>
+
+  <insert id="freeBoardFileInsertOne" parameterType="map">
+    INSERT INTO FREE_BOARD_FILE
+			(FREE_BOARD_FILE_ID, FREE_BOARD_ID
+			, ORIGINAL_FILE_NAME, STORED_FILE_NAME, FREE_BOARD_FILE_SIZE
+			, CREATE_DATE, UPDATE_DATE)
+		VALUES(FREE_BOARD_FILE_ID_SEQ.NEXTVAL, #{parentId}, #{originalFileName}, #{storedFileName}, #{fileSize}, SYSDATE, SYSDATE)
   </insert>
 
   <update id="freeBoardUpdateOne" parameterType="freeBoardVo">
@@ -65,8 +90,7 @@
 		WHERE FREE_BOARD_ID = #{freeBoardId}
 		AND MEMBER_NO = #{memberNo}
   </update>
-
- 
+  
   
 
 </mapper>

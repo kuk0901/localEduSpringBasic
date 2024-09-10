@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.edu.freeBoard.domain.FreeBoardVo;
@@ -58,53 +60,58 @@ public class FreeBoardController {
 
     return mav;
   }
-  
+
   @PostMapping("/")
-  public ResponseEntity<Map<String, String>> freeBoardInsertCtr(@RequestBody FreeBoardVo freeBoardVo) {
+  // @ModelAttribute: form tag를 받기 위한 annotation
+  public ResponseEntity<Map<String, String>> freeBoardInsertCtr(@ModelAttribute FreeBoardVo freeBoardVo,
+      MultipartHttpServletRequest mhr) {
     log.info(logTitleMsg);
     log.info("@PostMapping freeBoardInsertCtr freeBoardVo: {}", freeBoardVo);
-    
-    freeBoardService.freeBoardInsertOne(freeBoardVo);
-    
+
+    try {
+      freeBoardService.freeBoardInsertOne(freeBoardVo, mhr);
+    } catch (Exception e) {
+      log.info("자유게시판 추가에서 문제 발생. 원래는 화면 처리");
+      e.printStackTrace();
+    }
+
     Map<String, String> jsonMap = new HashMap<String, String>();
     jsonMap.put("result", "success");
-    
+
     return ResponseEntity.ok(jsonMap);
   }
-  
+
   // 게시판 수정 화면으로 이동
   @GetMapping("/{freeBoardId}") // 비동기 -> json
-  public ResponseEntity<FreeBoardVo> freeBoardUpdate(@PathVariable int freeBoardId) {
+  public ResponseEntity<Map<String, Object>> freeBoardUpdate(@PathVariable int freeBoardId) {
     log.info(logTitleMsg);
     log.info("@GetMapping freeBoardUpdate freeBoardId: {}", freeBoardId);
-    
-    FreeBoardVo freeBoardVo = freeBoardService.freeBoardSelectOne(freeBoardId);
+
+    Map<String, Object> resultMap = freeBoardService.freeBoardSelectOne(freeBoardId);
+
+    return ResponseEntity.ok(resultMap);
+  }
+
+  // 게시판 수정 DB
+  @PatchMapping("/{freeBoardId}") // 비동기 -> json
+  public ResponseEntity<?> freeBoardUpdateCtr(@PathVariable int freeBoardId, @RequestBody FreeBoardVo freeBoardVo) {
+    log.info(logTitleMsg);
+    log.info("@PostMapping freeBoardUpdateCtr freeBoardId: {}, freeBoardVo: {}", freeBoardId, freeBoardVo);
+
+    if (freeBoardVo.getMemberNo() == 0) {
+      Map<String, String> errorResMap = new HashMap<>();
+      errorResMap.put("errorMsg", "게시판 등록자가 아닙니다.");
+
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).body(errorResMap);
+    }
+
+    System.out.println("????????????????check????????? " + freeBoardVo.getMemberNo());
+
+    freeBoardService.freeBoardUpdateOne(freeBoardVo);
+
+    // FIXME: modify
+//   freeBoardVo = freeBoardService.freeBoardSelectOne(freeBoardId);
 
     return ResponseEntity.ok(freeBoardVo);
   }
-  
-  //게시판 수정 DB
- @PatchMapping("/{freeBoardId}") // 비동기 -> json
- public ResponseEntity<?> freeBoardUpdateCtr(@PathVariable int freeBoardId, @RequestBody FreeBoardVo freeBoardVo) {
-   log.info(logTitleMsg);
-   log.info("@PostMapping freeBoardUpdateCtr freeBoardId: {}, freeBoardVo: {}", freeBoardId, freeBoardVo);
-   
-   if (freeBoardVo.getMemberNo() == 0) {
-     Map<String, String> errorResMap = new HashMap<>();
-     errorResMap.put("errorMsg", "게시판 등록자가 아닙니다.");
-     
-     return ResponseEntity
-       .status(HttpStatus.BAD_REQUEST)
-       .contentType(MediaType.APPLICATION_JSON)
-       .body(errorResMap);
-   }
-   
-   System.out.println("????????????????check????????? " + freeBoardVo.getMemberNo());
-   
-   freeBoardService.freeBoardUpdateOne(freeBoardVo);
-
-   freeBoardVo = freeBoardService.freeBoardSelectOne(freeBoardId);
-   
-   return ResponseEntity.ok(freeBoardVo);
- }
 }

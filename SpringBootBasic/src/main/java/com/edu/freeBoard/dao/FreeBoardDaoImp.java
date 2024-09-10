@@ -48,4 +48,14 @@ public class FreeBoardDaoImp implements FreeBoardDao{
     sqlSession.update(namespace + "freeBoardUpdateOne", freeBoardVo);
   }
 
+  @Override
+  public void freeBoardFileInsertOne(Map<String, Object> map) {
+    sqlSession.insert(namespace + "freeBoardFileInsertOne", map);
+  }
+
+  @Override
+  public List<Map<String, Object>> freeBoardFileSelectList(int no) {
+    return sqlSession.selectList(namespace + "freeBoardFileSelectList", no);
+  }
+
 }
