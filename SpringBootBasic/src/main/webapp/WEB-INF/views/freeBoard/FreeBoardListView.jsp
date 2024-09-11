@@ -72,15 +72,28 @@ tr>th {
 			// mapper에서 작성한 alias를 칼럼으로 사용 => originalFileName => 화면에서 사용
 			// src="/img/" 경로는 WebMvcConfig class를 통해 자동 치환
 			liHtmlStr = freeBoardFileList[i].originalFileName + "&nbsp;&nbsp;" + freeBoardFileList[i].freeBoardFileSize 
-				+ "(kb)" + "<img alt='image not found' src='/img/" + freeBoardFileList[i].storedFileName + "' style='width: 150px;' />"
+				+ "(kb)" + "<img alt='image not found' src='/img/" + freeBoardFileList[i].storedFileName + "' style='width: 150px;'" 
+				+ " fileId='" + freeBoardFileList[i].freeBoardFileId + "' />"
 				+ "<span><input type='button' value='수정' />"
-				+ "<input type='button' value='삭제' /></span>";
+				+ "<input type='button' value='삭제' id='imgFileDel" + i + "' /></span>"; // 별개로 수행되어야 함 => id를 별개로 줌
 			 
 		  listItem.innerHTML = liHtmlStr;
 		  storeFileListUl.append(listItem);
 		}
 		
+		// ^= : "시작하는" 연산자로, 지정된 값으로 시작하는 속성을 선택
+		// 해당 태그들에 이벤트 등록(바인딩을 위해 jQuery on() 사용)
+		$("input[id^='imgFileDel']").on("click", function (e) {
+	    e.preventDefault();
+	    
+	    const parentLi = $(this).closest("li"); // DOM 트리 탐색, 가장 가까운 li 요소를 찾음
+	    const imgTag = parentLi.find("img");
+	    
+	    parentLi.html("<span delfileid='" + imgTag.attr("fileId") + "'>이미지가 삭제되었습니다.</span>");
+	  });
+		
 	} // 파일 ui 제작 함수 end
+	
 	
 	// jQuery
 	$(function() {
@@ -125,7 +138,7 @@ tr>th {
 			htmlStr += '<button id="btnFreeBoardInsert">작성 완료</button>';
 			htmlStr += '</span>';
 			htmlStr += '</div>';
-				
+			
 			containerTag.html(htmlStr);
 			
 			const inputFreeBoardFile = document.getElementById("inputFreeBoardFile"); // multiple => Array
@@ -282,7 +295,7 @@ tr>th {
     	   htmlStr += '<div>';
          htmlStr += '<span>';
          htmlStr += '<button onclick="pageMoveFreeBoardListFnc();">이전페이지</button>';
-         htmlStr += '<button onclick="reseRequestFreeBoardUpdateCtrFnc();">수정 완료</button>';
+         htmlStr += '<button onclick="restRequestFreeBoardUpdateCtrFnc();">수정 완료</button>';
          htmlStr += '</span>';
          htmlStr += '</div>';
        } else {
@@ -324,34 +337,51 @@ tr>th {
 	}
 	
 // 자유게시판 DB 정보 수정
-  function reseRequestFreeBoardUpdateCtrFnc(tableTdTag) {
+  function restRequestFreeBoardUpdateCtrFnc(tableTdTag) {
    
 	  const inputMemberNoTag = $("#inputMemberNo");
-	  
     const freeBoardIdTag = $("#freeBoardId");
-    
     const freeBoardTitleTag = $("#freeBoardTitle");
     const freeBoardContentTag = $("#freeBoardContent");
     
-    const jsonDataObj = {
-        freeBoardId: freeBoardIdTag.val(),
-        memberNo: inputMemberNoTag.val(),
-        freeBoardTitle: freeBoardTitleTag.val(),
-        freeBoardContent: freeBoardContentTag.val(),
-        createDate: null,
-        updateDate: null
-    };
+    // 파일 처리를 위해(RESTful API 사용) Form 데이터 생성
+    const formDataObj = new FormData();
+    
+    formDataObj.append("freeBoardId", freeBoardIdTag.val());
+    formDataObj.append("memberNo", inputMemberNoTag.val());
+    formDataObj.append("freeBoardTitle", freeBoardTitleTag.val());
+    formDataObj.append("freeBoardContent", freeBoardContentTag.val());
 	
+    const storeFileListUl = $("#storeFileList");
+    console.log(storeFileListUl);
+    
+    // 이미지를 삭제할 예정인 데이터 수집 => id(PK)만 필요(DB 의존)
+    storeFileListUl.find('span[delfileid]').each(function(i, item) {
+    	  formDataObj.append('delFreeBoardFileIdList', $(item).attr("delfileid")); // name=""형태로 input 생성해 form 데이터에 append
+    });
+    
+    // 새로운 파일 데이터 수집 => 태그의 모든 데이터 필요
+    const inputFreeBoardFileArr = $("#inputFreeBoardFile")[0].files;
+    
+    if (inputFreeBoardFileArr.length > 0) {
+    	for (var i = 0; i < inputFreeBoardFileArr.length; i++) {
+    		formDataObj.append("inputFreeBoardFileArr" + i, inputFreeBoardFileArr[i]);
+    	}
+    }
+    
     $.ajax({
-      url: "/freeBoard/" + jsonDataObj.freeBoardId,
+      url: "/freeBoard/" + freeBoardIdTag.val(),
       method: "PATCH",
-      contentType: "application/json",
-      data: JSON.stringify(jsonDataObj),
-      dataType: "json",
-      success: function(data) {
-       alert("게시판 수정 도착: " + data);
+      contentType: false,
+      processData: false,
+      data: formDataObj,
+      success: function(resultMap) {
+//        alert("381line: 메시지만 띄워보기: " + resultMap);
+       const freeBoradVo = resultMap.freeBoardVo;
+       const freeBoardFileList = resultMap.freeBoardFileList;
        
-       let createDate = new Date(data.createDate).toLocaleString("ko-KR", {
+       
+       let createDate = new Date(freeBoradVo.createDate).toLocaleString("ko-KR", {
          year: "numeric",
          month: "2-digit",
          day: "2-digit",
@@ -367,22 +397,22 @@ tr>th {
 	   	     <tr>
 	   	       <td class="tableSubject">주제</td>
 	   	       <td style="width: 735px;" colspan="3">
-	   	         <input type="text" id="freeBoardTitle" name="freeBoardTitle" value="\${data.freeBoardTitle}" size="100px" />
+	   	         <input type="text" id="freeBoardTitle" name="freeBoardTitle" value="\${freeBoradVo.freeBoardTitle}" size="100px" />
 	   	       </td>
 	   	     </tr>
 	   	     
 	   	     <tr>
 	   	       <td class="tableSubject">작성자</td>
-	   	       <td class="tableValue">\${data.memberName}</td>
+	   	       <td class="tableValue">\${freeBoradVo.memberName}</td>
 	   	       <td class="tableSubject">게시판 번호</td>
 	   	       <td class="tableValue">
-	   	         <input id="freeBoardId" name="freeBoardId" value="\${data.freeBoardId}" readonly="readonly" />
+	   	         <input id="freeBoardId" name="freeBoardId" value="\${freeBoradVo.freeBoardId}" readonly="readonly" />
 	   	       </td>
 	   	     </tr>
 	   	     
 	   	     <tr>
 	   	       <td class="tableSubject">이메일</td>
-	   	       <td class="tableValue">\${data.email}</td>
+	   	       <td class="tableValue">\${freeBoradVo.email}</td>
 	   	       <td class="tableSubject">작성일자</td>
 	   	       <td class="tableValue">\${createDate}</td>
 	   	     </tr>
@@ -394,10 +424,19 @@ tr>th {
 	   	     </tr>
 	   	   </table>
 	   	   
+		   	 <div id="fileContainer" style="border: 1px solid black;">
+				    <label for="inputFreeBoardFile">파일</label>
+				    <input type="file" id="inputFreeBoardFile" name="freeBoardFileList" multiple>
+				    <ul id="fileList" class="fileUploadList"></ul>
+				    <ul id="storeFileList" class="fileUploadList"></ul>
+				 </div>
+	   	   
 	   	   <div>
 	   	     <span>
 	   	       <button onclick="pageMoveFreeBoardListFnc();">이전페이지</button>
-	   	       <button onclick="reseRequestFreeBoardUpdateCtrFnc();">수정 완료</button>
+	   	       <button onclick="restRequestFreeBoardUpdateCtrFnc();">수정 완료</button>
+	   	       <input type="button" value="삭제하기" 
+	   	    	   onclick="restRequestFreeBoardDeleteCtrFnc(\${freeBoardVo.freeBoardId}, \${freeBoardVo.memberNo}, 1);" />
 	   	     </span>
 	   	   </div>
     	 `;
@@ -405,7 +444,10 @@ tr>th {
        containerTag.html(htmlStr);
        
        const freeBoardContentTag = $("#freeBoardContent");
-       freeBoardContentTag.text(data.freeBoardContent);
+       freeBoardContentTag.text(freeBoradVo.freeBoardContent);
+       
+       storeFileMakeUlFnc(freeBoardFileList);
+       
       },
       error: function(xhr, status) {
         console.log(xhr.status);
@@ -418,20 +460,10 @@ tr>th {
       
   }
 	
-	function pageMoveFreeBoardDetailFnc(tableTdTag) {
-
-		let parentTr = tableTdTag.parentNode;
-
-		let freeBoardIdStr = parentTr.children[0].textContent;
-
-		let userSelectFreeBoardIdObj = document
-				.getElementById('userSelectFreeBoardId');
-		userSelectFreeBoardIdObj.value = freeBoardIdStr;
-
-		let freeBoardListFormObj = document.getElementById('freeBoardListForm');
-		freeBoardListFormObj.submit();
-
+	function restRequestFreeBoardDeleteCtrFnc(freeBoardId, memberNo, curPageStr) {
+		  
 	}
+	
 </script>
 
 </head>

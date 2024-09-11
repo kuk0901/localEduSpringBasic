@@ -93,25 +93,36 @@ public class FreeBoardController {
   }
 
   // 게시판 수정 DB
-  @PatchMapping("/{freeBoardId}") // 비동기 -> json
-  public ResponseEntity<?> freeBoardUpdateCtr(@PathVariable int freeBoardId, @RequestBody FreeBoardVo freeBoardVo) {
+  @PatchMapping("/{freeBoardId}") // json => @RequestBody // form => @RequestParam 사용 => 자동 형 변환
+  public ResponseEntity<?> freeBoardUpdateCtr(@PathVariable int freeBoardId
+      , @RequestParam Map<String, String> freeBoardMap
+      , MultipartHttpServletRequest mhr
+      // 일치하는 name을 받음, required = true는 값이 필수라는 의미(기본 값)
+      , @RequestParam(value="delFreeBoardFileIdList", required = false) List<Integer> delFreeBoardFileIdList
+  ) {
     log.info(logTitleMsg);
-    log.info("@PostMapping freeBoardUpdateCtr freeBoardId: {}, freeBoardVo: {}", freeBoardId, freeBoardVo);
+    log.info("@PostMapping freeBoardUpdateCtr freeBoardId: {}, freeBoardMap: {}, delFreeBoardFileIdList: {}"
+        , freeBoardId, freeBoardMap, delFreeBoardFileIdList);
 
-    if (freeBoardVo.getMemberNo() == 0) {
+    FreeBoardVo freeBoardVo = new FreeBoardVo();
+    freeBoardVo.setFreeBoardId(freeBoardId);
+    freeBoardVo.setMemberNo(Integer.parseInt(freeBoardMap.get("memberNo")));
+    freeBoardVo.setFreeBoardTitle(freeBoardMap.get("freeBoardTitle"));
+    freeBoardVo.setFreeBoardContent(freeBoardMap.get("freeBoardContent"));
+
+    try {
+      freeBoardService.freeBoardUpdateOne(freeBoardVo, mhr, delFreeBoardFileIdList);
+    } catch (Exception e) {
+      e.printStackTrace();
       Map<String, String> errorResMap = new HashMap<>();
       errorResMap.put("errorMsg", "게시판 등록자가 아닙니다.");
 
       return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.APPLICATION_JSON).body(errorResMap);
     }
 
-    System.out.println("????????????????check????????? " + freeBoardVo.getMemberNo());
+    // 화면에 사용될 수정된 데이터를 가져옴
+    Map<String, Object> resultMap = freeBoardService.freeBoardSelectOne(freeBoardId);
 
-    freeBoardService.freeBoardUpdateOne(freeBoardVo);
-
-    // FIXME: modify
-//   freeBoardVo = freeBoardService.freeBoardSelectOne(freeBoardId);
-
-    return ResponseEntity.ok(freeBoardVo);
+    return ResponseEntity.ok(resultMap);
   }
 }

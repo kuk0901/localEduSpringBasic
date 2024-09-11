@@ -91,6 +91,23 @@
 		AND MEMBER_NO = #{memberNo}
   </update>
   
+  <select id="fileSelectStoredFileName" parameterType="list" resultType="map">
+		SELECT FBF.FREE_BOARD_FILE_ID, FBF.STORED_FILE_NAME
+		FROM FREE_BOARD_FILE FBF
+		WHERE FBF.FREE_BOARD_FILE_ID IN 
+		<!-- 내부적으로 실행 collection 값으로 타입을 일치시킴, separator는 반복할 때마다 해당 값을 입힘 (1, 2, 3) 형태  -->
+		<foreach item="delFreeBoardFileId" collection="list" open="(" separator="," close=")">
+		  #{delFreeBoardFileId}
+		</foreach>
+  </select>
   
-
+  <delete id="deleteFileByFreeFilIds" parameterType="list">
+    DELETE FROM FREE_BOARD_FILE
+		WHERE FREE_BOARD_FILE_ID IN 
+		<foreach item="delFreeBoardFileId" collection="list" open="(" separator="," close=")">
+      #{delFreeBoardFileId}
+    </foreach>
+  </delete>
+  
+  
 </mapper>

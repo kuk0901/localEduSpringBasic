@@ -7,7 +7,7 @@ function pageMoveMemberListFnc() {
 	  location.href = "/member/list";
 }
 
-function pageMoveFreeboardListFnc() {
+function pageMoveFreeBoardListFnc() {
     location.href = "/freeBoard/list";
 }
 </script>
@@ -16,7 +16,7 @@ function pageMoveFreeboardListFnc() {
 	SPMS(Simple Project Management System)
 	
 	<span style="border: 1px solid greenyellow; color: greenyellow; cursor: pointer;" onclick="pageMoveMemberListFnc();">회원</span>
-	<span style="border: 1px solid greenyellow; color: greenyellow; cursor: pointer;" onclick="pageMoveFreeboardListFnc();">자유게시판</span>
+	<span style="border: 1px solid greenyellow; color: greenyellow; cursor: pointer;" onclick="pageMoveFreeBoardListFnc();">자유게시판</span>
 	
 	<c:if test="${sessionScope.member.email ne null}">
 		<span style="float: right; text-align: right;">

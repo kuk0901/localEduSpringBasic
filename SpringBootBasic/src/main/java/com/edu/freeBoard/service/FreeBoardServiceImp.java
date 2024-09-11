@@ -14,6 +14,8 @@ import com.edu.freeBoard.dao.FreeBoardDao;
 import com.edu.freeBoard.domain.FreeBoardVo;
 import com.edu.util.FileUtils;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class FreeBoardServiceImp implements FreeBoardService {
 
@@ -60,9 +62,34 @@ public class FreeBoardServiceImp implements FreeBoardService {
     }
   }
 
+  @Transactional // 트랜잭션으로 만듦 => 하나라도 실패하는 경우 RollBack
   @Override
-  public void freeBoardUpdateOne(FreeBoardVo freeBoardVo) {
+  public void freeBoardUpdateOne(FreeBoardVo freeBoardVo, MultipartHttpServletRequest mhr,
+      List<Integer> delFreeBoardFileIdList) throws Exception {
+    
     freeBoardDao.freeBoardUpdateOne(freeBoardVo);
+    
+    int parentSeq = freeBoardVo.getFreeBoardId();
+    
+    if (delFreeBoardFileIdList != null) {
+      List<Map<String, Object>> tempFileList = freeBoardDao.fileSelectStoredFileName(delFreeBoardFileIdList);
+      
+      // JPA 명명규칙, 구문과 관련된 부분을 앞에 작성 - by를 기준으로 뒷부분에 행하는 변수 작성
+      freeBoardDao.deleteFileByFreeFilIds(delFreeBoardFileIdList);
+      
+      if (tempFileList != null) {
+        fileUtils.parseDeleteFileInfo(tempFileList);
+      }
+    } // if문
+    
+    // 재사용 사례
+    List<Map<String, Object>> fileInsertList = fileUtils.parseInsertFileInfo(parentSeq, mhr);
+    
+    if (fileInsertList.isEmpty() == false) {
+      for (Map<String, Object> map : fileInsertList) {
+        freeBoardDao.freeBoardFileInsertOne(map);
+      }
+    }
   }
 
 

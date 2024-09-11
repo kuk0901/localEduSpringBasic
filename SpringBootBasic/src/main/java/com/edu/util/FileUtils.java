@@ -62,4 +62,20 @@ public class FileUtils {
     
     return fileList;
   }
+
+  // 실제 파일 삭제 => DB를 기반으로 data를 가져와 파일이 존재할 경우 실제 파일 삭제
+  public void parseDeleteFileInfo(List<Map<String, Object>> tempFileList) throws Exception {
+    for (Map<String, Object> tempFileMap : tempFileList) {
+      String storedFileName = (String) tempFileMap.get("STORED_FILE_NAME");
+    
+      File file = new File(FILE_PATH + "/" + storedFileName);
+      
+      if (file.exists()) {
+        file.delete();
+      } else {
+        System.err.println("파일이 존재하지 않습니다.");
+      }
+    }
+    
+  }
 }
