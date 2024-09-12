@@ -134,7 +134,7 @@ tr>th {
 			
 			htmlStr += '<div>';
 			htmlStr += '<span>';
-			htmlStr += '<button onclick="pageMoveFreeBoardListFnc();">이전페이지</button>';
+			htmlStr += '<button onclick="pageMoveFreeBoardListFnc(1);">이전페이지</button>';
 			htmlStr += '<button id="btnFreeBoardInsert">작성 완료</button>';
 			htmlStr += '</span>';
 			htmlStr += '</div>';
@@ -221,16 +221,19 @@ tr>th {
       
     const parentTr = tableTdTafObj.parent();
     const freeBoardIdStr = parentTr.children().eq(0).text();
-//     alert("freeBoardIdStr: " + freeBoardIdStr);
+    const curPageInput = $("#curPage");
   
     $.ajax({
-      url: "/freeBoard/" + freeBoardIdStr,
+      url: ("/freeBoard/" + freeBoardIdStr + "?curPage=" + curPageInput.val()),
       method: "GET",
       dataType: "json",
       success: function(data) {
-//        alert("도착: " + data);
+    	  console.log(data);
        const freeBoardVo = data.freeBoardVo;
        const freeBoardFileList = data.freeBoardFileList;
+       const curPageStr = data.curPage;
+       
+       console.log(freeBoardVo);
        
        let createDate = new Date(freeBoardVo.createDate).toLocaleString("ko-KR", {
     	   year: "numeric",
@@ -292,16 +295,20 @@ tr>th {
        const inputSessionMemberNoTag = $("#inputMemberNo");
        
        if (freeBoardVo.memberNo == inputSessionMemberNoTag.val()) {
+    	   console.log(freeBoardVo);
+    	   
     	   htmlStr += '<div>';
          htmlStr += '<span>';
-         htmlStr += '<button onclick="pageMoveFreeBoardListFnc();">이전페이지</button>';
+         htmlStr += '<button onclick="pageMoveFreeBoardListFnc(' + curPageStr + ');">이전페이지</button>';
          htmlStr += '<button onclick="restRequestFreeBoardUpdateCtrFnc();">수정 완료</button>';
+         htmlStr += "<input type='button' value='삭제하기' onclick='restRequestFreeBoardDeleteCtrFnc(" 
+        		 + freeBoardVo.freeBoardId + ", " + freeBoardVo.memberNo + ", " + curPageStr + ");' />";
          htmlStr += '</span>';
          htmlStr += '</div>';
        } else {
     	   htmlStr += '<div>';
          htmlStr += '<span>';
-         htmlStr += '<button onclick="pageMoveFreeBoardListFnc();">이전페이지</button>';
+         htmlStr += '<button onclick="pageMoveFreeBoardListFnc(' + curPageStr + ');">이전페이지</button>';
          htmlStr += '</span>';
          htmlStr += '</div>';
        }    
@@ -433,7 +440,7 @@ tr>th {
 	   	   
 	   	   <div>
 	   	     <span>
-	   	       <button onclick="pageMoveFreeBoardListFnc();">이전페이지</button>
+	   	       <button onclick="pageMoveFreeBoardListFnc(1);">이전페이지</button>
 	   	       <button onclick="restRequestFreeBoardUpdateCtrFnc();">수정 완료</button>
 	   	       <input type="button" value="삭제하기" 
 	   	    	   onclick="restRequestFreeBoardDeleteCtrFnc(\${freeBoardVo.freeBoardId}, \${freeBoardVo.memberNo}, 1);" />
@@ -461,7 +468,21 @@ tr>th {
   }
 	
 	function restRequestFreeBoardDeleteCtrFnc(freeBoardId, memberNo, curPageStr) {
-		  
+		  $.ajax({
+			  url: ("/freeBoard/" + freeBoardId + "?memberNo=" + memberNo + "&curPage=" + curPageStr),
+			  method: "DELETE",
+			  dataType: "",
+			  success: function(data) {
+				  alert(data);
+				  const curPage = data;
+				  
+				  location.href = ("./list" + "?curPage=" + curPage);
+			  },
+			  error: function(xhr, status) {
+				  console.log(xhr.status);
+				  alert(status);
+			  }
+		  }) // ajax end
 	}
 	
 </script>
@@ -523,7 +544,7 @@ tr>th {
 			value="">
 	</form>
 
-
+  
 
 </body>
 </html>

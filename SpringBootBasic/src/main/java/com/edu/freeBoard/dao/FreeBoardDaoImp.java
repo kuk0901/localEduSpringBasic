@@ -68,4 +68,26 @@ public class FreeBoardDaoImp implements FreeBoardDao{
     return sqlSession.delete(namespace + "deleteFileByFreeFilIds", delFreeBoardFileIdList);
   }
 
+  @Override
+  public int deleteFileByFreeBoardId(int freeBoardId) {
+    return sqlSession.delete(namespace + "deleteFileByFreeBoardId", freeBoardId);
+    
+  }
+
+  @Override
+  public List<Map<String, Object>> selectFileByFreeBoardId(int freeBoardId) {
+    
+    return sqlSession.selectList(namespace + "selectFileByFreeBoardId", freeBoardId); 
+  }
+
+  @Override
+  public void freeBoardDeleteOne(int freeBoardId, int memberNo) {
+    
+     Map<String, Integer> paramMap = new HashMap<>();
+     paramMap.put("freeBoardId", freeBoardId);
+     paramMap.put("memberNo", memberNo);
+
+     sqlSession.delete(namespace + "freeBoardDeleteOne", paramMap);
+  }
+
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -83,12 +84,14 @@ public class FreeBoardController {
 
   // 게시판 수정 화면으로 이동
   @GetMapping("/{freeBoardId}") // 비동기 -> json
-  public ResponseEntity<Map<String, Object>> freeBoardUpdate(@PathVariable int freeBoardId) {
+  public ResponseEntity<Map<String, Object>> freeBoardUpdate(@PathVariable int freeBoardId, @RequestParam int curPage) {
     log.info(logTitleMsg);
-    log.info("@GetMapping freeBoardUpdate freeBoardId: {}", freeBoardId);
+    log.info("@GetMapping freeBoardUpdate freeBoardId: {}, curPage: {}", freeBoardId, curPage);
 
     Map<String, Object> resultMap = freeBoardService.freeBoardSelectOne(freeBoardId);
 
+    resultMap.put("curPage", curPage);
+    
     return ResponseEntity.ok(resultMap);
   }
 
@@ -124,5 +127,15 @@ public class FreeBoardController {
     Map<String, Object> resultMap = freeBoardService.freeBoardSelectOne(freeBoardId);
 
     return ResponseEntity.ok(resultMap);
+  }
+  
+  @DeleteMapping("/{freeBoardId}")
+  public ResponseEntity<Integer> freeBoardDelete(@PathVariable int freeBoardId, @RequestParam int memberNo, @RequestParam int curPage) {
+    log.info(logTitleMsg);
+    log.info("@DeleteMapping freeBoardDelete freeBoardId: {}, memberNo: {}, curPage: {}", freeBoardId, memberNo, curPage);
+    
+    freeBoardService.freeBoardDeleteOne(freeBoardId, memberNo);
+    
+    return ResponseEntity.ok(curPage);
   }
 }
