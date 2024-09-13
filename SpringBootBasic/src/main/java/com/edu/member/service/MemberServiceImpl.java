@@ -1,6 +1,8 @@
 package com.edu.member.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,12 +17,17 @@ public class MemberServiceImpl implements MemberService {
   // dependency injection 레벨로 동작
   @Autowired
   public MemberDao memberDao;
-  
-  @Override
-  public List<MemberVo> memberSelectList() {
-    return memberDao.memberSelectList();
-  }
 
+  @Override
+  public List<MemberVo> memberSelectList(String searchOption, String keyword) {
+    Map<String, Object> map = new HashMap<>();
+    
+    map.put("searchOption", searchOption);
+    map.put("keyword", keyword);
+    
+    return memberDao.memberSelectList(map);
+  }
+  
   @Override
   public MemberVo memberExist(String email, String password) {
     return memberDao.memberExist(email, password);
@@ -45,4 +52,6 @@ public class MemberServiceImpl implements MemberService {
   public int memberDeleteOne(int no) {
     return memberDao.memberDeleteOne(no);
   }
+
+  
 }

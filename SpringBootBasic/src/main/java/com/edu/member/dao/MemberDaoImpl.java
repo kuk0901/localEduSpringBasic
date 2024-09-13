@@ -2,6 +2,7 @@ package com.edu.member.dao;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +20,9 @@ public class MemberDaoImpl implements MemberDao {
   final String namespace = "com.edu.member.";
   
   @Override
-  public List<MemberVo> memberSelectList() {
+  public List<MemberVo> memberSelectList(Map<String, Object> map) {
     // xml 파일의 쿼리문을 가져옴 => id로 접근
-    return sqlSession.selectList(namespace + "memberSelectList");
+    return sqlSession.selectList(namespace + "memberSelectList", map);
   }
 
   @Override

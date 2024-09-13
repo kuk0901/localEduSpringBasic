@@ -13,10 +13,28 @@
 			javaType="java.util.Date" />
 	</resultMap>
 
-	<select id="memberSelectList" resultMap="memberResultMap">
-		SELECT MEMBER_NO, EMAIL,
-		MEMBER_NAME, CRE_DATE
+  <!-- mybatis에서 제공하는 공통단을 위한 일종의 함수 -->
+  <sql id="search">
+    <choose>
+      <when test="searchOption == 'all'">
+        MEMBER_NAME LIKE '%' || #{keyword} || '%'
+        OR EMAIL LIKE '%' || #{keyword} || '%'
+      </when>
+      <when test="searchOption == 'memberName'">
+        MEMBER_NAME LIKE '%' || #{keyword} || '%'
+      </when>
+      <otherwise>
+        EMAIL LIKE '%' || #{keyword} || '%'
+      </otherwise>
+    </choose>
+  </sql>
+
+	<select id="memberSelectList" parameterType="map" resultMap="memberResultMap">
+		SELECT MEMBER_NO, EMAIL, MEMBER_NAME, CRE_DATE
 		FROM MEMBER
+		<where> <!-- include 안에 아무런 값이 없으면 WHERE절 삭제, 있으면 WHERE절화 시켜줌(mybatis 제공) -->
+		  <include refid="search"></include>
+		</where>
 		ORDER BY MEMBER_NO DESC
 	</select>
 

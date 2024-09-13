@@ -50,6 +50,37 @@ tr>th {
 	crossorigin="anonymous"></script>
 
 <script type="text/javascript">
+  let fileUpdateCnt = 0;
+  
+  function myImgFileUpdateFnc(updateFile) {
+	  const updateFileTag = $(updateFile);
+	  
+	  updateFileTag.attr("name", "updateFreeBoardFileArr" + fileUpdateCnt);
+	  fileUpdateCnt++;
+	  
+	  console.log(updateFileTag[0].files[0]);
+	  const fileObj = updateFileTag[0].files[0];
+	  
+	  const parentLiTag = updateFileTag.closest("li");
+	  
+	  const imgTag = parentLiTag.children("img");
+	  
+	  if (fileObj) {
+		  const reader = new FileReader();  // input 태그를 file로 만듦
+		  
+		  // 지연 로딩
+		  reader.onload = function(e) {
+			  imgTag.attr("src", e.target.result);
+		  };
+		  
+		  // onload보다 우선 실행
+		  reader.readAsDataURL(fileObj); // 가상의 주소(내부 경로 주소가 아닌 url)를 가져옴		  
+	  }
+	  
+	  // span => 삭제할 파일의 ID를 속성으로 가짐
+	  parentLiTag.append("<span delfileid='" + imgTag.attr("fileid") + "'></span>");
+  }
+  
   
 	function storeFileMakeUlFnc(freeBoardFileList) {
 		const storeFileListUl = $("#storeFileList");
@@ -73,8 +104,8 @@ tr>th {
 			// src="/img/" 경로는 WebMvcConfig class를 통해 자동 치환
 			liHtmlStr = freeBoardFileList[i].originalFileName + "&nbsp;&nbsp;" + freeBoardFileList[i].freeBoardFileSize 
 				+ "(kb)" + "<img alt='image not found' src='/img/" + freeBoardFileList[i].storedFileName + "' style='width: 150px;'" 
-				+ " fileId='" + freeBoardFileList[i].freeBoardFileId + "' />"
-				+ "<span><input type='button' value='수정' />"
+				+ " fileid='" + freeBoardFileList[i].freeBoardFileId + "' />"
+				+ "<span><input type='file' value='수정' onchange='myImgFileUpdateFnc(this);'/>"
 				+ "<input type='button' value='삭제' id='imgFileDel" + i + "' /></span>"; // 별개로 수행되어야 함 => id를 별개로 줌
 			 
 		  listItem.innerHTML = liHtmlStr;
@@ -89,7 +120,7 @@ tr>th {
 	    const parentLi = $(this).closest("li"); // DOM 트리 탐색, 가장 가까운 li 요소를 찾음
 	    const imgTag = parentLi.find("img");
 	    
-	    parentLi.html("<span delfileid='" + imgTag.attr("fileId") + "'>이미지가 삭제되었습니다.</span>");
+	    parentLi.html("<span delfileid='" + imgTag.attr("fileid") + "'>이미지가 삭제되었습니다.</span>");
 	  });
 		
 	} // 파일 ui 제작 함수 end
@@ -228,7 +259,7 @@ tr>th {
       method: "GET",
       dataType: "json",
       success: function(data) {
-    	  console.log(data);
+    	  
        const freeBoardVo = data.freeBoardVo;
        const freeBoardFileList = data.freeBoardFileList;
        const curPageStr = data.curPage;
@@ -362,6 +393,17 @@ tr>th {
     const storeFileListUl = $("#storeFileList");
     console.log(storeFileListUl);
     
+    // 기존의 이미지에서 수정 click 시 수행될 로직
+    const updateFreeBoardFileArr = $("#storeFileList").find("input[name^=updateFreeBoardFileArr]");
+    
+    // updateFreeBoardFileArr
+    if (updateFreeBoardFileArr.length > 0) {
+    	  for (var i = 0; i < updateFreeBoardFileArr.length; i++) {
+    		  // Key: Value
+    		  formDataObj.append(updateFreeBoardFileArr.eq(i).attr("name"), updateFreeBoardFileArr[i].files[0]);
+    	  }
+    }
+    
     // 이미지를 삭제할 예정인 데이터 수집 => id(PK)만 필요(DB 의존)
     storeFileListUl.find('span[delfileid]').each(function(i, item) {
     	  formDataObj.append('delFreeBoardFileIdList', $(item).attr("delfileid")); // name=""형태로 input 생성해 form 데이터에 append
@@ -370,6 +412,7 @@ tr>th {
     // 새로운 파일 데이터 수집 => 태그의 모든 데이터 필요
     const inputFreeBoardFileArr = $("#inputFreeBoardFile")[0].files;
     
+    // inputFreeBoardFileArr
     if (inputFreeBoardFileArr.length > 0) {
     	for (var i = 0; i < inputFreeBoardFileArr.length; i++) {
     		formDataObj.append("inputFreeBoardFileArr" + i, inputFreeBoardFileArr[i]);
@@ -471,7 +514,7 @@ tr>th {
 		  $.ajax({
 			  url: ("/freeBoard/" + freeBoardId + "?memberNo=" + memberNo + "&curPage=" + curPageStr),
 			  method: "DELETE",
-			  dataType: "",
+			  dataType: "text",
 			  success: function(data) {
 				  alert(data);
 				  const curPage = data;
